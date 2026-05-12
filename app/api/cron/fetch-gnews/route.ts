@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
   if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
     return NextResponse.json(
-      { success: false, error: "Acesso nao autorizado" },
+      { success: false, error: "Acesso não autorizado" },
       { status: 401 },
     );
   }
