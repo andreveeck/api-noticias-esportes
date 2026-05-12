@@ -1,7 +1,8 @@
 import type { GNewsArticle } from "./gnews";
 
-const CHARS_MARKER_REGEX = /\[\d+\s+chars\]/i;
-const CHARS_MARKER_GLOBAL_REGEX = /\s*\[\d+\s+chars\]\s*/gi;
+const TRUNCATION_MARKER_REGEX = /\[\s*(?:\d+\s+chars|\.{3}|\u2026)\s*\]/i;
+const TRUNCATION_MARKER_GLOBAL_REGEX =
+  /\s*\[\s*(?:\d+\s+chars|\.{3}|\u2026)\s*\]\s*/gi;
 const TRAILING_ELLIPSIS_REGEX = /(\.\.\.|\u2026)\s*$/;
 
 export interface NormalizedNewsArticle {
@@ -49,16 +50,15 @@ export function cleanGNewsText(text: string | null | undefined): string | null {
 
   if (paragraphs.length > 1) {
     cleanedText = paragraphs
-      .filter((paragraph) => !CHARS_MARKER_REGEX.test(paragraph))
+      .filter((paragraph) => !TRUNCATION_MARKER_REGEX.test(paragraph))
       .join("\n\n");
   } else {
     cleanedText = paragraphs[0]
-      .replace(/\s*\.\.\.\s*\[\d+\s+chars\]\s*$/i, "")
-      .replace(/\s*\[\d+\s+chars\]\s*$/i, "");
+      .replace(/\s*(?:\.\.\.|\u2026)?\s*\[\s*(?:\d+\s+chars|\.{3}|\u2026)\s*\]\s*$/i, "");
   }
 
   cleanedText = cleanedText
-    .replace(CHARS_MARKER_GLOBAL_REGEX, " ")
+    .replace(TRUNCATION_MARKER_GLOBAL_REGEX, " ")
     .replace(/[ \t]+/g, " ")
     .replace(TRAILING_ELLIPSIS_REGEX, "")
     .trim();
