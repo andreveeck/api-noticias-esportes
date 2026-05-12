@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../../../lib/supabase-admin";
+import { getSupabaseAdmin } from "../../../lib/supabase-admin";
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
   const to = from + limit - 1;
 
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from("news_articles")
       .select(

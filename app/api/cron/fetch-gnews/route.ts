@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { fetchGNewsArticles, GNEWS_QUERY } from "../../../../lib/gnews";
 import { normalizeArticle } from "../../../../lib/news-normalizer";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { getSupabaseAdmin } from "../../../../lib/supabase-admin";
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
@@ -13,6 +14,7 @@ function toErrorMessage(error: unknown): string {
 }
 
 async function createFetchLog(payload: {
+  supabaseAdmin: SupabaseClient | null;
   endpoint: "search";
   query: string;
   status: "success" | "error";
@@ -22,7 +24,12 @@ async function createFetchLog(payload: {
   articles_skipped?: number;
   error_message?: string;
 }) {
-  const { error } = await supabaseAdmin.from("gnews_fetch_logs").insert(payload);
+  const { supabaseAdmin, ...rest } = payload;
+  if (!supabaseAdmin) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin.from("gnews_fetch_logs").insert(rest);
 
   if (error) {
     console.error("Falha ao registrar log da ingestao GNews:", error.message);
@@ -40,7 +47,10 @@ export async function GET(request: Request) {
     );
   }
 
+  let supabaseAdmin: SupabaseClient | null = null;
+
   try {
+    supabaseAdmin = getSupabaseAdmin();
     const data = await fetchGNewsArticles();
     const articles = Array.isArray(data.articles) ? data.articles : [];
     const totalArticlesApi =
@@ -59,7 +69,7 @@ export async function GET(request: Request) {
 
       const { error } = await supabaseAdmin
         .from("news_articles")
-        .upsert(normalizedArticle, { onConflict: "url" });
+        .upsert([normalizedArticle] as never[], { onConflict: "url" });
 
       if (error) {
         skippedCount += 1;
@@ -70,6 +80,7 @@ export async function GET(request: Request) {
     }
 
     await createFetchLog({
+      supabaseAdmin,
       endpoint: "search",
       query: GNEWS_QUERY,
       status: "success",
@@ -89,12 +100,21 @@ export async function GET(request: Request) {
   } catch (error) {
     const errorMessage = toErrorMessage(error);
 
-    await createFetchLog({
-      endpoint: "search",
-      query: GNEWS_QUERY,
-      status: "error",
-      error_message: errorMessage,
-    });
+    try {
+      if (!supabaseAdmin) {
+        supabaseAdmin = getSupabaseAdmin();
+      }
+
+      await createFetchLog({
+        supabaseAdmin,
+        endpoint: "search",
+        query: GNEWS_QUERY,
+        status: "error",
+        error_message: errorMessage,
+      });
+    } catch {
+      // Ignore logging failures to keep API error response stable.
+    }
 
     return NextResponse.json(
       { success: false, error: errorMessage },
