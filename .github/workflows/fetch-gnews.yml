@@ -1,0 +1,28 @@
+name: Fetch GNews Articles
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+    - cron: "0 13 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 19 * * *"
+    - cron: "0 22 * * *"
+    - cron: "0 1 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  fetch-gnews:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call GNews ingestion endpoint
+        run: |
+          RESPONSE=$(curl -sS -X GET "${{ secrets.APP_URL }}/api/cron/fetch-gnews" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail)
+
+          echo "API response:"
+          echo "$RESPONSE"
+
