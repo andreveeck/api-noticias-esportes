@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Call GNews ingestion endpoint
         run: |
-          HTTP_CODE=$(curl -sS -o response.json -w "%{http_code}" -X GET "${{ secrets.APP_URL }}/api/cron/fetch-gnews" \
+          HTTP_CODE=$(curl -sSL -o response.json -w "%{http_code}" -X GET "${{ secrets.APP_URL }}/api/cron/fetch-gnews" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
 
