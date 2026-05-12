@@ -10,6 +10,9 @@ function toErrorMessage(error: unknown): string {
   return "Erro inesperado ao buscar noticias";
 }
 
+const PUBLIC_NEWS_ERROR_MESSAGE =
+  "Nao foi possivel carregar as noticias no momento";
+
 function parsePositiveInteger(value: string | null, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
 
@@ -52,8 +55,10 @@ export async function GET(request: NextRequest) {
       data: data ?? [],
     });
   } catch (error) {
+    console.error("Erro interno em /api/news:", toErrorMessage(error));
+
     return NextResponse.json(
-      { success: false, error: toErrorMessage(error) },
+      { success: false, error: PUBLIC_NEWS_ERROR_MESSAGE },
       { status: 500 },
     );
   }

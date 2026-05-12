@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../../../lib/supabase.types";
 
 import { fetchGNewsArticles, GNEWS_QUERY } from "../../../../lib/gnews";
 import { normalizeArticle } from "../../../../lib/news-normalizer";
@@ -14,7 +15,7 @@ function toErrorMessage(error: unknown): string {
 }
 
 async function createFetchLog(payload: {
-  supabaseAdmin: SupabaseClient | null;
+  supabaseAdmin: SupabaseClient<Database> | null;
   endpoint: "search";
   query: string;
   status: "success" | "error";
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
     );
   }
 
-  let supabaseAdmin: SupabaseClient | null = null;
+  let supabaseAdmin: SupabaseClient<Database> | null = null;
 
   try {
     supabaseAdmin = getSupabaseAdmin();
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
 
       const { error } = await supabaseAdmin
         .from("news_articles")
-        .upsert([normalizedArticle] as never[], { onConflict: "url" });
+        .upsert(normalizedArticle, { onConflict: "url" });
 
       if (error) {
         skippedCount += 1;

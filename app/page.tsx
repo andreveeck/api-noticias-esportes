@@ -22,16 +22,19 @@ async function getLatestNews(): Promise<{ data: NewsRow[]; error: string | null 
       .limit(50);
 
     if (error) {
-      return { data: [], error: error.message };
+      console.error("Erro interno ao buscar noticias para home:", error.message);
+      return { data: [], error: "Nao foi possivel carregar as noticias" };
     }
 
     return { data: (data as NewsRow[]) ?? [], error: null };
   } catch (error) {
     if (error instanceof Error) {
-      return { data: [], error: error.message };
+      console.error("Erro interno ao buscar noticias para home:", error.message);
+      return { data: [], error: "Nao foi possivel carregar as noticias" };
     }
 
-    return { data: [], error: "Falha ao carregar noticias" };
+    console.error("Erro interno ao buscar noticias para home: desconhecido");
+    return { data: [], error: "Nao foi possivel carregar as noticias" };
   }
 }
 
