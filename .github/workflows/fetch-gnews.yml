@@ -8,21 +8,22 @@ on:
     - cron: "0 19 * * *"
     - cron: "0 22 * * *"
     - cron: "0 1 * * *"
-
   workflow_dispatch:
 
 jobs:
   fetch-gnews:
     runs-on: ubuntu-latest
-
     steps:
       - name: Call GNews ingestion endpoint
         run: |
-          RESPONSE=$(curl -sS -X GET "${{ secrets.APP_URL }}/api/cron/fetch-gnews" \
+          HTTP_CODE=$(curl -sS -o response.json -w "%{http_code}" -X GET "${{ secrets.APP_URL }}/api/cron/fetch-gnews" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json" \
-            --fail)
+            -H "Content-Type: application/json")
 
-          echo "API response:"
-          echo "$RESPONSE"
+          echo "HTTP: $HTTP_CODE"
+          echo "Body:"
+          cat response.json
 
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            exit 1
+          fi
